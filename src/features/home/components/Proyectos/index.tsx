@@ -29,7 +29,7 @@ const Proyectos = () => {
       demo: "https://lcs-staffing-users.vercel.app/",
       technologies: ["React Native", "Expo", "Firebase", "CSS"],
       gradient: "from-blue-500 to-cyan-500",
-      size: "large", // Para bento grid
+      size: "large",
     },
     {
       id: 2,
@@ -319,16 +319,8 @@ const ProjectCard = ({
               ))}
             </div>
 
-            {/* Botones */}
-            <motion.div
-              className="flex gap-3"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{
-                y: isHovered ? 0 : 20,
-                opacity: isHovered ? 1 : 0,
-              }}
-              transition={{ duration: 0.3 }}
-            >
+            {/* Botones - AHORA SIEMPRE VISIBLES EN MOBILE */}
+            <div className="flex gap-3">
               <Button
                 size="sm"
                 className="bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 hover:scale-105 transition-all"
@@ -362,7 +354,7 @@ const ProjectCard = ({
                   </a>
                 </Button>
               )}
-            </motion.div>
+            </div>
           </div>
         </div>
 
