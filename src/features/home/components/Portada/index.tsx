@@ -373,7 +373,7 @@ const Portada = () => {
                   transition={{ delay: 0.6 }}
                   className="text-xs font-bold uppercase tracking-[0.3em] text-sky-500/70 mb-3"
                 >
-                  Portafolio · 2025
+                  Portafolio · 2026
                 </motion.div>
                 <motion.h1
                   initial={{ opacity: 0, y: 30 }}
