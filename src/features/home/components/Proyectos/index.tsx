@@ -100,6 +100,21 @@ const projects: Project[] = [
     size: "large",
     category: "Web",
   },
+
+  {
+    id: 9,
+    title: "Gestor de Gastos",
+    description:
+      "App fullstack para registrar y controlar gastos personales, con autenticación, filtros por categoría/fecha y visualización de gastos mediante gráficos.",
+    image:
+      "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80",
+    type: "web",
+    github: "https://github.com/AlejoGuti1122/gestor-gastos-frontend",
+    demo: "https://gestor-gastos-front.netlify.app/",
+    technologies: ["Next.js", "TypeScript", "Node.js", "Prisma", "PostgreSQL"],
+    size: "medium",
+    category: "Web",
+  },
 ]
 
 const categories = ["Todos", "Web", "Mobile"]
