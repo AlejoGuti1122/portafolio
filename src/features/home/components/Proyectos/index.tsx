@@ -59,34 +59,6 @@ const projects: Project[] = [
     category: "Mobile",
   },
   {
-    id: 3,
-    title: "Save Your Name",
-    description:
-      "App móvil para guardar y organizar información importante con sincronización en la nube.",
-    image:
-      "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&q=80",
-    type: "mobile",
-    github: "https://github.com/AlejoGuti1122/save-your-name",
-    demo: "https://save-your-name.netlify.app/",
-    technologies: ["React Native", "Expo", "Firebase"],
-    size: "medium",
-    category: "Mobile",
-  },
-  {
-    id: 4,
-    title: "Sticker Smash",
-    description:
-      "Aplicación móvil creativa para crear y personalizar stickers con una experiencia de usuario intuitiva.",
-    image:
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80",
-    type: "mobile",
-    github: "https://github.com/AlejoGuti1122/StickerSmash",
-    demo: "https://sticker-smash-mobile.netlify.app/",
-    technologies: ["React Native", "Expo"],
-    size: "small",
-    category: "Mobile",
-  },
-  {
     id: 8,
     title: "GANDI",
     description:
@@ -97,6 +69,20 @@ const projects: Project[] = [
     github: "",
     demo: "https://newgandi.vercel.app/",
     technologies: ["React", "TypeScript", "Vite", "Tailwind"],
+    size: "large",
+    category: "Web",
+  },
+  {
+    id: 10,
+    title: "TaskFlow Pro",
+    description:
+      "SaaS de gestión de tareas multi-tenant con roles y permisos, tableros kanban, y dashboard de analytics con métricas en tiempo real.",
+    image:
+      "https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=800&q=80",
+    type: "web",
+    github: "https://github.com/AlejoGuti1122/taskflow-pro-frontend",
+    demo: "https://task-pro-flow.netlify.app/",
+    technologies: ["Next.js", "TypeScript", "NestJS", "Prisma", "PostgreSQL"],
     size: "large",
     category: "Web",
   },
@@ -114,6 +100,20 @@ const projects: Project[] = [
     technologies: ["Next.js", "TypeScript", "Node.js", "Prisma", "PostgreSQL"],
     size: "medium",
     category: "Web",
+  },
+  {
+    id: 3,
+    title: "Save Your Name",
+    description:
+      "App móvil para guardar y organizar información importante con sincronización en la nube.",
+    image:
+      "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&q=80",
+    type: "mobile",
+    github: "https://github.com/AlejoGuti1122/save-your-name",
+    demo: "https://save-your-name.netlify.app/",
+    technologies: ["React Native", "Expo", "Firebase"],
+    size: "medium",
+    category: "Mobile",
   },
 ]
 
@@ -168,10 +168,10 @@ const ProjectCard = ({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onMouseEnter={() => setHovered(true)}
-      className={`relative cursor-pointer ${isLarge ? "md:col-span-2 md:row-span-2" : ""}`}
+      className="relative cursor-pointer"
     >
       <div
-        className={`relative rounded-lg overflow-hidden ${isLarge ? "min-h-[420px]" : "min-h-[300px]"}`}
+        className="relative rounded-lg overflow-hidden min-h-[340px]"
         style={{
           background: "#131316",
           border: `1px solid ${hovered ? "#D4FF3D" : "#2A2A28"}`,
@@ -225,7 +225,7 @@ const ProjectCard = ({
                 fontFamily: "var(--font-display)",
                 color: hovered ? "#D4FF3D" : "#F5F4EF",
                 transition: "color 0.2s",
-                fontSize: isLarge ? "clamp(1.5rem, 3vw, 2.2rem)" : "1.4rem",
+                fontSize: "1.4rem",
               }}
             >
               {project.title}
@@ -415,7 +415,7 @@ const Proyectos = () => {
         {/* ── Bento Grid ── */}
         <motion.div
           layout
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 auto-rows-fr"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
         >
           <AnimatePresence mode="popLayout">
             {filtered.map((project, index) => (
