@@ -6,6 +6,7 @@ import {
   useScroll,
   useTransform,
   useReducedMotion,
+  type MotionValue,
 } from "framer-motion"
 import {
   Calendar,
@@ -22,15 +23,11 @@ import {
 */
 
 const ScrollLine = ({
-  containerRef,
+  progress,
 }: {
-  containerRef: React.RefObject<HTMLDivElement>
+  progress: MotionValue<number>
 }) => {
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start center", "end center"],
-  })
-  const height = useTransform(scrollYProgress, [0, 1], ["0%", "100%"])
+  const height = useTransform(progress, [0, 1], ["0%", "100%"])
 
   return (
     <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-px hidden md:block">
@@ -115,13 +112,35 @@ const TimelineItem = ({
   const Icon = item.icon
   const [hovered, setHovered] = useState(false)
   const reduceMotion = useReducedMotion()
+  const itemRef = useRef<HTMLDivElement>(null)
+
+  const { scrollYProgress } = useScroll({
+    target: itemRef,
+    offset: ["start end", "end start"],
+  })
+  const direction = isLeft ? 1 : -1
+  const parallaxY = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [90 * direction, -90 * direction],
+  )
+  const rotate = useTransform(
+    scrollYProgress,
+    [0, 1],
+    [7 * direction, -7 * direction],
+  )
 
   return (
     <motion.div
+      ref={itemRef}
       initial={{ opacity: 0, x: reduceMotion ? 0 : isLeft ? -40 : 40 }}
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.5, delay: index * 0.05 }}
+      style={{
+        y: reduceMotion ? 0 : parallaxY,
+        rotate: reduceMotion ? 0 : rotate,
+      }}
       className={`relative flex items-center ${isLeft ? "md:flex-row" : "md:flex-row-reverse"} flex-col md:gap-8`}
     >
       {/* ── Card ── */}
@@ -207,14 +226,29 @@ const TimelineItem = ({
 
 const Tiempo = () => {
   const containerRef = useRef<HTMLDivElement>(null)
+  const reduceMotion = useReducedMotion()
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start center", "end center"],
+  })
+  const headerY = useTransform(scrollYProgress, [0, 1], [60, -60])
+  const headerScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.92, 1, 0.92])
 
   return (
     <div
       ref={containerRef}
+      data-scroll-section="tiempo"
       className="relative min-h-screen w-full py-24 px-6"
       style={{ background: "#0A0A0B" }}
     >
       <div className="relative z-10 container mx-auto max-w-5xl">
+        <motion.div
+          style={{
+            y: reduceMotion ? 0 : headerY,
+            scale: reduceMotion ? 1 : headerScale,
+          }}
+        >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -246,11 +280,10 @@ const Tiempo = () => {
             El camino que me trajo hasta aquí, commit por commit.
           </p>
         </motion.div>
+        </motion.div>
 
         <div className="relative">
-          <ScrollLine
-            containerRef={containerRef as React.RefObject<HTMLDivElement>}
-          />
+          <ScrollLine progress={scrollYProgress} />
 
           <div className="space-y-10 md:space-y-16">
             {timeline.map((item, index) => (

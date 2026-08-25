@@ -7,6 +7,7 @@ import {
   useMotionValue,
   useSpring,
   useTransform,
+  useScroll,
   useReducedMotion,
 } from "framer-motion"
 import { Github, ExternalLink, Smartphone, Monitor } from "lucide-react"
@@ -137,6 +138,18 @@ const ProjectCard = ({
   const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["4deg", "-4deg"])
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-4deg", "4deg"])
 
+  const { scrollYProgress: cardScrollProgress } = useScroll({
+    target: cardRef,
+    offset: ["start end", "center center"],
+  })
+  const scrollScale = useTransform(cardScrollProgress, [0, 1], [0.88, 1])
+  const scrollShadow = useTransform(cardScrollProgress, (p) => {
+    const alpha = 0.28 * p
+    const blur = 10 + p * 36
+    const spread = p * 20
+    return `0px ${spread}px ${blur}px rgba(212, 255, 61, ${alpha})`
+  })
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (reduceMotion || !cardRef.current) return
     const rect = cardRef.current.getBoundingClientRect()
@@ -163,12 +176,18 @@ const ProjectCard = ({
       style={
         reduceMotion
           ? undefined
-          : { rotateX, rotateY, transformStyle: "preserve-3d" }
+          : {
+              rotateX,
+              rotateY,
+              scale: scrollScale,
+              boxShadow: scrollShadow,
+              transformStyle: "preserve-3d",
+            }
       }
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onMouseEnter={() => setHovered(true)}
-      className="relative cursor-pointer"
+      className="relative cursor-pointer rounded-lg"
     >
       <div
         className="relative rounded-lg overflow-hidden min-h-[340px]"
@@ -303,6 +322,15 @@ const ProjectCard = ({
 
 const Proyectos = () => {
   const [activeFilter, setActiveFilter] = useState("Todos")
+  const containerRef = useRef<HTMLDivElement>(null)
+  const reduceMotion = useReducedMotion()
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end start"],
+  })
+  const headerY = useTransform(scrollYProgress, [0, 1], [80, -80])
+  const headerScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.92, 1, 0.92])
 
   const filtered = projects.filter(
     (p) => activeFilter === "Todos" || p.category === activeFilter,
@@ -310,10 +338,18 @@ const Proyectos = () => {
 
   return (
     <div
+      ref={containerRef}
+      data-scroll-section="proyectos"
       className="relative min-h-screen w-full py-24 px-6"
       style={{ background: "#0A0A0B" }}
     >
       <div className="relative z-10 container mx-auto max-w-6xl">
+        <motion.div
+          style={{
+            y: reduceMotion ? 0 : headerY,
+            scale: reduceMotion ? 1 : headerScale,
+          }}
+        >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -345,6 +381,7 @@ const Proyectos = () => {
             Aplicaciones web y móviles construidas de punta a punta, con
             atención al detalle.
           </p>
+        </motion.div>
         </motion.div>
 
         {/* ── Stats ── */}

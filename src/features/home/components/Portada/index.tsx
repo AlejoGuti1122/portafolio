@@ -8,6 +8,7 @@ import {
   useReducedMotion,
 } from "framer-motion"
 import { Github, Linkedin, Mail } from "lucide-react"
+import Background3D from "@/features/home/components/Background3D"
 
 const MagneticButton = ({ children }: { children: React.ReactNode }) => {
   const ref = useRef<HTMLDivElement>(null)
@@ -60,7 +61,7 @@ const CursorSpotlight = () => {
 
   return (
     <motion.div
-      className="pointer-events-none fixed inset-0 z-0"
+      className="pointer-events-none fixed inset-0 z-[1]"
       style={{
         background: `radial-gradient(600px circle at ${x.get()}px ${y.get()}px, rgba(212,255,61,0.06), transparent 70%)`,
       }}
@@ -170,9 +171,11 @@ const TerminalBlock = () => {
 const Portada = () => {
   return (
     <div
+      data-scroll-section="portada"
       className="relative min-h-screen w-full overflow-hidden"
       style={{ background: "#0A0A0B" }}
     >
+      <Background3D />
       <CursorSpotlight />
 
       <div className="relative z-10 container mx-auto px-6 py-24 min-h-screen flex flex-col justify-center">

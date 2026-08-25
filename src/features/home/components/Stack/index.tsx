@@ -7,6 +7,7 @@ import {
   useMotionValue,
   useSpring,
   useTransform,
+  useScroll,
   AnimatePresence,
   useReducedMotion,
 } from "framer-motion"
@@ -108,6 +109,18 @@ const TechCard = ({
   const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["6deg", "-6deg"])
   const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-6deg", "6deg"])
 
+  const { scrollYProgress: cardScrollProgress } = useScroll({
+    target: cardRef,
+    offset: ["start end", "center center"],
+  })
+  const scrollScale = useTransform(cardScrollProgress, [0, 1], [0.86, 1])
+  const scrollShadow = useTransform(cardScrollProgress, (p) => {
+    const alpha = 0.3 * p
+    const blur = 8 + p * 28
+    const spread = p * 16
+    return `0px ${spread}px ${blur}px rgba(212, 255, 61, ${alpha})`
+  })
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (reduceMotion || !cardRef.current) return
     const rect = cardRef.current.getBoundingClientRect()
@@ -135,9 +148,15 @@ const TechCard = ({
       style={
         reduceMotion
           ? undefined
-          : { rotateX, rotateY, transformStyle: "preserve-3d" }
+          : {
+              rotateX,
+              rotateY,
+              scale: scrollScale,
+              boxShadow: scrollShadow,
+              transformStyle: "preserve-3d",
+            }
       }
-      className="relative cursor-pointer"
+      className="relative cursor-pointer rounded-lg"
     >
       <div
         className="relative h-40 rounded-lg overflow-hidden flex flex-col items-center justify-center gap-3 p-5"
@@ -183,13 +202,31 @@ const TechCard = ({
 
 const Stack = () => {
   const [activeCategory, setActiveCategory] = useState("Todos")
+  const containerRef = useRef<HTMLDivElement>(null)
+  const reduceMotion = useReducedMotion()
+
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start end", "end start"],
+  })
+  const headerY = useTransform(scrollYProgress, [0, 1], [80, -80])
+  const headerScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.92, 1, 0.92])
+  const gridY = useTransform(scrollYProgress, [0, 1], [50, -50])
 
   return (
     <div
+      ref={containerRef}
+      data-scroll-section="stack"
       className="relative min-h-screen w-full py-24 px-6"
       style={{ background: "#0A0A0B" }}
     >
       <div className="relative z-10 container mx-auto max-w-5xl">
+        <motion.div
+          style={{
+            y: reduceMotion ? 0 : headerY,
+            scale: reduceMotion ? 1 : headerScale,
+          }}
+        >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -221,6 +258,7 @@ const Stack = () => {
             Tecnologías que uso a diario para construir productos web y móviles,
             de punta a punta.
           </p>
+        </motion.div>
         </motion.div>
 
         {/* ── Stats ── */}
@@ -286,6 +324,7 @@ const Stack = () => {
         {/* ── Grid de cards ── */}
         <motion.div
           layout
+          style={{ y: reduceMotion ? 0 : gridY }}
           className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"
         >
           {technologies.map((tech, index) => (
