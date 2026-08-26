@@ -129,6 +129,7 @@ const TimelineItem = ({
     [0, 1],
     [7 * direction, -7 * direction],
   )
+  const nodeScale = useTransform(scrollYProgress, [0, 1], [0.4, 1])
 
   return (
     <motion.div
@@ -203,7 +204,10 @@ const TimelineItem = ({
       </div>
 
       {/* ── Nodo central ── */}
-      <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 z-20">
+      <motion.div
+        style={{ scale: reduceMotion ? 1 : nodeScale }}
+        className="hidden md:flex absolute left-1/2 -translate-x-1/2 z-20"
+      >
         <div
           className="w-12 h-12 rounded-full flex items-center justify-center"
           style={{
@@ -217,7 +221,7 @@ const TimelineItem = ({
             style={{ color: hovered ? "#D4FF3D" : "#8A8A85" }}
           />
         </div>
-      </div>
+      </motion.div>
 
       <div className="md:hidden w-full h-6" />
     </motion.div>

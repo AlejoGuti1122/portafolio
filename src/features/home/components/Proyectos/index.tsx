@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useMemo } from "react"
 import {
   motion,
   AnimatePresence,
@@ -11,6 +11,7 @@ import {
   useReducedMotion,
 } from "framer-motion"
 import { Github, ExternalLink, Smartphone, Monitor } from "lucide-react"
+import { seededRandom } from "@/lib/utils"
 
 /* ── Paleta v2 (misma que Portada / Stack / Tiempo) ──
    bg: #0A0A0B · surface: #131316 · text: #F5F4EF · muted: #8A8A85
@@ -150,6 +151,26 @@ const ProjectCard = ({
     return `0px ${spread}px ${blur}px rgba(212, 255, 61, ${alpha})`
   })
 
+  const { scatterX, scatterY, scatterRotate } = useMemo(() => {
+    const angle = seededRandom(index) * Math.PI * 2
+    const dist = 70 + seededRandom(index + 1) * 90
+    // redondeado: el transform de framer-motion se serializa con menor
+    // precisión en el SSR que en el cliente, y un float irracional aquí
+    // produce un mismatch de hidratación
+    return {
+      scatterX: Math.round(Math.cos(angle) * dist),
+      scatterY: Math.round(Math.sin(angle) * dist),
+      scatterRotate: Math.round(seededRandom(index + 2) * 50 - 25),
+    }
+  }, [index])
+  const scrollX = useTransform(cardScrollProgress, [0, 1], [scatterX, 0])
+  const scrollY = useTransform(cardScrollProgress, [0, 1], [scatterY, 0])
+  const scrollRotate = useTransform(
+    cardScrollProgress,
+    [0, 1],
+    [scatterRotate, 0],
+  )
+
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (reduceMotion || !cardRef.current) return
     const rect = cardRef.current.getBoundingClientRect()
@@ -181,6 +202,9 @@ const ProjectCard = ({
               rotateY,
               scale: scrollScale,
               boxShadow: scrollShadow,
+              x: scrollX,
+              y: scrollY,
+              rotate: scrollRotate,
               transformStyle: "preserve-3d",
             }
       }

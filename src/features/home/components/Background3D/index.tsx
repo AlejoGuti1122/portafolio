@@ -2,7 +2,6 @@
 
 import React, { useRef, useMemo, useEffect, useState } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
-import { MeshDistortMaterial } from "@react-three/drei"
 import {
   useScroll,
   useReducedMotion,
@@ -97,28 +96,131 @@ const ParticleField = ({
   )
 }
 
-const DistortedCore = ({
+type Fragment = {
+  scatter: THREE.Vector3
+  final: THREE.Vector3
+  scatterQuat: THREE.Quaternion
+  finalQuat: THREE.Quaternion
+  scale: number
+  stagger: number
+  spin: number
+  colorMix: number
+}
+
+const buildFragments = (count: number): Fragment[] => {
+  const probe = new THREE.IcosahedronGeometry(1.7, 2)
+  const pos = probe.attributes.position
+  const up = new THREE.Vector3(0, 1, 0)
+
+  const fragments = Array.from({ length: count }, (_, i) => {
+    const vi = Math.floor((i / count) * pos.count)
+    const final = new THREE.Vector3(
+      pos.getX(vi),
+      pos.getY(vi),
+      pos.getZ(vi),
+    )
+    const normal = final.clone().normalize()
+    const scatterDist = 4 + Math.random() * 5
+
+    return {
+      final,
+      finalQuat: new THREE.Quaternion().setFromUnitVectors(up, normal),
+      // el scatter empuja cada shard hacia afuera desde su propio destino,
+      // para que el ensamblaje se lea como "cada pieza vuela a su sitio"
+      scatter: normal
+        .clone()
+        .multiplyScalar(scatterDist)
+        .add(
+          new THREE.Vector3(
+            (Math.random() - 0.5) * 4,
+            (Math.random() - 0.5) * 4,
+            (Math.random() - 0.5) * 4,
+          ),
+        ),
+      scatterQuat: new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(
+          Math.random() * Math.PI * 2,
+          Math.random() * Math.PI * 2,
+          Math.random() * Math.PI * 2,
+        ),
+      ),
+      scale: 0.07 + Math.random() * 0.06,
+      stagger: Math.random() * 0.4,
+      spin: 0.4 + Math.random() * 1.2,
+      colorMix: Math.random(),
+    }
+  })
+
+  probe.dispose()
+  return fragments
+}
+
+const AssemblingCore = ({
+  count,
   scrollProgress,
 }: {
+  count: number
   scrollProgress: MotionValue<number>
 }) => {
-  const meshRef = useRef<THREE.Mesh>(null)
+  const groupRef = useRef<THREE.Group>(null)
+  const meshRef = useRef<THREE.InstancedMesh>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const materialRef = useRef<any>(null)
-  const tmpColor = useMemo(() => new THREE.Color(), [])
 
-  useFrame((state, delta) => {
+  const fragments = useMemo(() => buildFragments(count), [count])
+  const dummy = useMemo(() => new THREE.Object3D(), [])
+  const tmpQuat = useMemo(() => new THREE.Quaternion(), [])
+  const spinQuat = useMemo(() => new THREE.Quaternion(), [])
+  const tmpColor = useMemo(() => new THREE.Color(), [])
+  const up = useMemo(() => new THREE.Vector3(0, 1, 0), [])
+
+  useEffect(() => {
     const mesh = meshRef.current
     if (!mesh) return
+    const shardColor = new THREE.Color()
+    fragments.forEach((frag, i) => {
+      shardColor.copy(ACCENT).lerp(ACCENT_ALT, frag.colorMix)
+      mesh.setColorAt(i, shardColor)
+    })
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true
+  }, [fragments])
+
+  useFrame((state, delta) => {
+    const group = groupRef.current
+    const mesh = meshRef.current
+    if (!group || !mesh) return
     const progress = scrollProgress.get()
 
-    mesh.rotation.x += delta * 0.06
-    mesh.rotation.y += delta * (0.09 + progress * 0.14)
-    mesh.position.y = THREE.MathUtils.lerp(0.4, -0.4, progress)
+    group.rotation.y += delta * (0.05 + progress * 0.1)
+    group.position.y = THREE.MathUtils.lerp(0.4, -0.4, progress)
+    const breathe = 1 + Math.sin(state.clock.elapsedTime * 0.4) * 0.03
+    group.scale.setScalar(breathe)
 
-    const breathe = 1 + Math.sin(state.clock.elapsedTime * 0.4) * 0.04
-    const growth = 1 + progress * 0.3
-    mesh.scale.setScalar(breathe * growth)
+    // ensamblado en portada -> disperso a mitad de página -> ensamblado
+    // de nuevo al final; stagger varía la forma de la curva por fragmento
+    // sin mover sus extremos (siempre cerrado en progress 0 y 1)
+    const wave = Math.sin(progress * Math.PI)
+
+    for (let i = 0; i < fragments.length; i++) {
+      const frag = fragments[i]
+      const openness = Math.pow(wave, 0.6 + frag.stagger)
+      const eased = 1 - openness
+
+      dummy.position.lerpVectors(frag.scatter, frag.final, eased)
+      tmpQuat.slerpQuaternions(frag.scatterQuat, frag.finalQuat, eased)
+      if (eased < 1) {
+        spinQuat.setFromAxisAngle(
+          up,
+          frag.spin * (1 - eased) * state.clock.elapsedTime,
+        )
+        tmpQuat.multiply(spinQuat)
+      }
+      dummy.quaternion.copy(tmpQuat)
+      dummy.scale.setScalar(frag.scale)
+      dummy.updateMatrix()
+      mesh.setMatrixAt(i, dummy.matrix)
+    }
+    mesh.instanceMatrix.needsUpdate = true
 
     if (materialRef.current) {
       tmpColor
@@ -129,20 +231,23 @@ const DistortedCore = ({
   })
 
   return (
-    <mesh ref={meshRef} position={[0, 0, -3]}>
-      <icosahedronGeometry args={[1.7, 4]} />
-      <MeshDistortMaterial
-        ref={materialRef}
-        color="#131316"
-        emissive="#D4FF3D"
-        emissiveIntensity={0.06}
-        distort={0.4}
-        speed={1.1}
-        roughness={0.5}
-        metalness={0.1}
-        wireframe
-      />
-    </mesh>
+    <group ref={groupRef} position={[0, 0, -3]}>
+      <instancedMesh
+        ref={meshRef}
+        args={[undefined, undefined, count]}
+        frustumCulled={false}
+      >
+        <icosahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial
+          ref={materialRef}
+          color="#131316"
+          emissive="#D4FF3D"
+          emissiveIntensity={0.08}
+          roughness={0.5}
+          metalness={0.15}
+        />
+      </instancedMesh>
+    </group>
   )
 }
 
@@ -242,6 +347,9 @@ const Background3D = () => {
       ? 600
       : MAX_PARTICLES,
   )
+  const [fragmentCount] = useState(() =>
+    typeof window !== "undefined" && window.innerWidth < 768 ? 60 : 130,
+  )
   const { scrollYProgress } = useScroll()
   const breakpointsRef = useSectionBreakpoints(CAMERA_WAYPOINTS.length)
 
@@ -260,7 +368,7 @@ const Background3D = () => {
           breakpointsRef={breakpointsRef}
         />
         <ParticleField count={particleCount} scrollProgress={scrollYProgress} />
-        <DistortedCore scrollProgress={scrollYProgress} />
+        <AssemblingCore count={fragmentCount} scrollProgress={scrollYProgress} />
       </Canvas>
     </div>
   )
